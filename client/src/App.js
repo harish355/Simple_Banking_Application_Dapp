@@ -11,7 +11,7 @@ function App()
   const [web3,setWeb3]=useState(null);
   const [accounts,setAccounts]=useState(null);
   const [contract,setContract]=useState(null);
-
+  const [balance,setBalance]=useState(0);
   const [value,setValue]=useState(0);
 
   const web3_init=async()=>{
@@ -35,6 +35,8 @@ function App()
       );
       setContract(instance)
       setAccounts(User_account)
+      // let resp=await contract.methods.getBalance.call({from:accounts});
+      // setValue(resp)
 
     } catch (error) {
       alert(
@@ -42,14 +44,32 @@ function App()
       );
       console.error(error);
     }
-    let resp=await contract.methods.balanceOf.call("0x141fB68ddDD49323ff30371d02A7d0971bCFfC66").call();
-    setValue(resp)
+
+  }
+  const getValue=async()=>{
+    var resp=await contract.methods.getBalance().call({from:accounts});
+    setBalance(resp)
+  }
+  const deposit=async()=>{
+    await contract.methods.deposit(value).send({from:accounts[0],value:value});
+
   }
 
-
   useEffect(()=>{
+    if (window.ethereum) {
+      window.ethereum.on("chainChanged", () => {
+        window.location.reload();
+      });
+      window.ethereum.on("accountsChanged", () => {
+        window.location.reload();
+      });
+    }
     web3_init();
-  },[])
+    if(contract!=null)
+    {
+      getValue()
+    }
+  },[contract])
 
 
   
@@ -66,7 +86,7 @@ function App()
       </div>
 
       <div class="row">
-        <div class="col-12">Balance {value} </div>
+        <div class="col-12">Balance {balance} </div>
       </div>
       <div class="row">
         <div class="input-group">
@@ -77,7 +97,11 @@ function App()
           }}
           placeholder="0 Ether"  aria-describedby="basic-addon2" />
           <div class="input-group-append">
-            <button class="btn btn-outline-secondary" type="button">Deposit</button>
+            <button class="btn btn-outline-secondary" type="button" onClick={
+              ()=>{
+                deposit();
+              }
+            }>Deposit</button>
             <button class="btn btn-outline-secondary" type="button">Withdraw</button>
           </div>
         </div>
