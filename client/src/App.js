@@ -47,12 +47,23 @@ function App()
 
   }
   const getValue=async()=>{
-    var resp=await contract.methods.getBalance().call({from:accounts});
-    setBalance(resp)
+    if(accounts!=null)
+    {
+      var resp=await contract.methods.getBalance().call({from:accounts[0]});
+      setBalance(resp)
+    }
   }
   const deposit=async()=>{
-    await contract.methods.deposit(value).send({from:accounts[0],value:value});
+    
+    await contract.methods.deposit(value).send({from:accounts[0],value:
+      web3.utils.toHex(web3.utils.toWei(value.toString(), 'ether'))});
+      window.location.reload();
 
+  }
+
+  const withdraw=async()=>{
+    await contract.methods.withdraw( 100000000000).send({from:accounts[0]});
+    window.location.reload();
   }
 
   useEffect(()=>{
@@ -69,7 +80,7 @@ function App()
     {
       getValue()
     }
-  },[contract])
+  },[contract,accounts])
 
 
   
@@ -102,7 +113,11 @@ function App()
                 deposit();
               }
             }>Deposit</button>
-            <button class="btn btn-outline-secondary" type="button">Withdraw</button>
+            <button class="btn btn-outline-secondary" type="button" onClick={
+              ()=>{
+                withdraw();
+              }
+            }>Withdraw</button>
           </div>
         </div>
       </div>
