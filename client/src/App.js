@@ -9,10 +9,11 @@ function App()
 {
   // state = { storageValue: 0, web3: null, accounts: null, contract: null };
   const [web3,setWeb3]=useState(null);
+  const [accBal,setAccBal]=useState(0);
   const [accounts,setAccounts]=useState(null);
   const [contract,setContract]=useState(null);
   const [balance,setBalance]=useState(0);
-  const [value,setValue]=useState(0);
+  const [value,setValue]=useState();
 
   const web3_init=async()=>{
     if (window.ethereum) {
@@ -28,6 +29,9 @@ function App()
       setWeb3(web3_js);
       const User_account = await web3_js.eth.getAccounts();
       const networkId = await web3_js.eth.net.getId();
+      web3_js.eth.getBalance(User_account[0]).then((res)=>{
+        setAccBal(res/1000000000000000000);}
+      );
       const deployedNetwork = SimpleBanking.networks[networkId];
       const instance = await new web3_js.eth.Contract(
         SimpleBanking.abi,
@@ -35,6 +39,7 @@ function App()
       );
       setContract(instance)
       setAccounts(User_account)
+      // setAccBal(acc);
       // let resp=await contract.methods.getBalance.call({from:accounts});
       // setValue(resp)
 
@@ -55,14 +60,15 @@ function App()
   }
   const deposit=async()=>{
     
-    await contract.methods.deposit(value).send({from:accounts[0],value:
-      web3.utils.toHex(web3.utils.toWei(value.toString(), 'ether'))});
+     await contract.methods.deposit().send({from:accounts[0],value:
+      web3.utils.toHex(value)});
       window.location.reload();
 
   }
 
   const withdraw=async()=>{
-    await contract.methods.withdraw( 100000000000).send({from:accounts[0]});
+    let resp=await contract.methods.withdraw(value).send({from:accounts[0]});
+    console.log(resp)
     window.location.reload();
   }
 
@@ -97,7 +103,8 @@ function App()
       </div>
 
       <div class="row">
-        <div class="col-12">Balance {balance} </div>
+        <div class="col-6">Balance {balance} Wei</div>
+        <div class="col-6">Acc Balance {accBal*Math.pow(10,18)} Wei </div>
       </div>
       <div class="row">
         <div class="input-group">
@@ -106,7 +113,7 @@ function App()
           onChange={(event)=>{
             setValue(event.target.value)
           }}
-          placeholder="0 Ether"  aria-describedby="basic-addon2" />
+          placeholder="0 Wei"  aria-describedby="basic-addon2" />
           <div class="input-group-append">
             <button class="btn btn-outline-secondary" type="button" onClick={
               ()=>{
