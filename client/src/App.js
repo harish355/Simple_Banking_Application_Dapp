@@ -102,13 +102,13 @@ function App()
 
   return (
     
-    <div className="container">
-      <ul className="nav">
-          <li className="nav-item">
+    <div className="">
+      <ul className="nav" style={{backgroundColor:"lightblue"}}>
+          <li className="nav-item col-md-4">
             <a className="nav-link active" href="#">Homepage</a>
           </li>
 
-          <li className="nav-item">
+          <li className="nav-item col-md-4 offset-md-4" >
             <a className="nav-link disabled" href="#">{accounts}</a>
           </li>
       </ul>
