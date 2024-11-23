@@ -1,13 +1,27 @@
-import React, {  useEffect,useState } from "react";
+import React, { useEffect, useState } from "react";
 import SimpleBanking from "./contracts/SimpleBanking.json";
 import getWeb3 from "./getWeb3";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Container,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Box,
+  Grid,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  Grow,
+  Fade
+} from '@mui/material';
+import { AccountBalanceWallet, Send, Download, Upload } from '@mui/icons-material';
 import "./App.css";
 
-
-
-function App()
-{
-  // state = { storageValue: 0, web3: null, accounts: null, contract: null };
+function App() {
   const [web3,setWeb3]=useState(null);
   const [accBal,setAccBal]=useState(0);
   const [accounts,setAccounts]=useState(null);
@@ -16,6 +30,8 @@ function App()
   const [value,setValue]=useState();
   const [toAddress,setToaddress]=useState();
   const [transferAmount,setTransferAmount]=useState();
+  const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
 
   const web3_init=async()=>{
     if (window.ethereum) {
@@ -41,18 +57,14 @@ function App()
       );
       setContract(instance)
       setAccounts(User_account)
-      // setAccBal(acc);
-      // let resp=await contract.methods.getBalance.call({from:accounts});
-      // setValue(resp)
-
     } catch (error) {
       alert(
         `Failed to load web3, accounts, or contract. Check console for details.`,
       );
       console.error(error);
     }
-
   }
+
   const getValue=async()=>{
     if(accounts!=null)
     {
@@ -60,26 +72,48 @@ function App()
       setBalance(resp)
     }
   }
-  const deposit=async()=>{
-    
-     await contract.methods.deposit().send({from:accounts[0],value:
-      web3.utils.toHex(value)});
+
+  const deposit = async () => {
+    try {
+      setLoading(true);
+      await contract.methods.deposit().send({
+        from: accounts[0],
+        value: web3.utils.toHex(value)
+      });
+      setSnackbar({ open: true, message: 'Deposit successful!', severity: 'success' });
       window.location.reload();
+    } catch (error) {
+      setSnackbar({ open: true, message: 'Deposit failed: ' + error.message, severity: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  }
+  const withdraw = async () => {
+    try {
+      setLoading(true);
+      await contract.methods.withdraw(value).send({ from: accounts[0] });
+      setSnackbar({ open: true, message: 'Withdrawal successful!', severity: 'success' });
+      window.location.reload();
+    } catch (error) {
+      setSnackbar({ open: true, message: 'Withdrawal failed: ' + error.message, severity: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const withdraw=async()=>{
-    let resp=await contract.methods.withdraw(value).send({from:accounts[0]});
-    console.log(resp)
-    window.location.reload();
-  }
-
-  const Transfer=async()=>{
-    let resp=await contract.methods.transfer(transferAmount,toAddress).send({from:accounts[0]});
-    console.log(resp)
-    alert(resp)
-
-  }
+  const Transfer = async () => {
+    try {
+      setLoading(true);
+      await contract.methods.transfer(transferAmount, toAddress).send({ from: accounts[0] });
+      setSnackbar({ open: true, message: 'Transfer successful!', severity: 'success' });
+      window.location.reload();
+    } catch (error) {
+      setSnackbar({ open: true, message: 'Transfer failed: ' + error.message, severity: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(()=>{
     if (window.ethereum) {
@@ -97,81 +131,148 @@ function App()
     }
   },[accounts])
 
-
-  
-
   return (
-    
-    <div className="">
-      <ul className="nav" style={{backgroundColor:"lightblue"}}>
-          <li className="nav-item col-md-4">
-            <a className="nav-link active" href="#">Homepage</a>
-          </li>
+    <div>
+      <AppBar position="static" color="primary">
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            DBank
+          </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.7 }}>
+            {accounts ? accounts[0] : 'Connect Wallet'}
+          </Typography>
+        </Toolbar>
+      </AppBar>
 
-          <li className="nav-item col-md-4 offset-md-4" >
-            <a className="nav-link disabled" href="#">{accounts}</a>
-          </li>
-      </ul>
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Grow in timeout={500}>
+              <Card sx={{ transition: '0.3s', '&:hover': { transform: 'scale(1.02)' } }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    <AccountBalanceWallet sx={{ mr: 1 }} />
+                    Account Balance
+                  </Typography>
+                  <Typography variant="h4">{balance} Wei</Typography>
+                </CardContent>
+              </Card>
+            </Grow>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Grow in timeout={800}>
+              <Card sx={{ transition: '0.3s', '&:hover': { transform: 'scale(1.02)' } }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    <AccountBalanceWallet sx={{ mr: 1 }} />
+                    Wallet Balance
+                  </Typography>
+                  <Typography variant="h4">{accBal * Math.pow(10, 18)} Wei</Typography>
+                </CardContent>
+              </Card>
+            </Grow>
+          </Grid>
+        </Grid>
 
-      <div className="row">
-        <div className="col-6">Account {balance} Wei</div>
-        <div className="col-6">Wallet Balance {accBal*Math.pow(10,18)} Wei </div>
-      </div>
-      <div className="row">
-        <div className="input-group">
-          <input type="text" className="form-control"
-          value={value}
-          onChange={(event)=>{
-            setValue(event.target.value)
-          }}
-          placeholder="0 Wei"  aria-describedby="basic-addon2" />
-          <div className="input-group-append">
-            <button className="btn btn-outline-secondary" type="button" onClick={
-              ()=>{
-                deposit();
-              }
-            }>Deposit</button>
-            <button className="btn btn-outline-secondary" type="button" onClick={
-              ()=>{
-                withdraw();
-              }
-            }>Withdraw</button>
-          </div>
-        </div>
-      </div>
-            <br></br>
-      <form>
-      <div className="row">
-        <div className="col-6">Transfer Funds:</div>
-       
-      </div>
-      <div className="form-row">
-        <div className="row">
-          <div className="col-5">
-            <input type="text" className="form-control"
-            value={toAddress}
-            onChange={(event)=>{
-              setToaddress(event.target.value)
-            }} placeholder="To Address" />
-          </div>
-          <div className="col-5">
-            <input type="text" className="form-control"
-            value={transferAmount}
-            onChange={(event)=>{
-              setTransferAmount(event.target.value)
-            }} placeholder="Amount To Tranfser" />
-          </div>
-          <div className="col-2">
-            <button type="text" className="form-control" onClick={Transfer }>Transfer</button>
-          </div>
-        </div>
-      </div>
-    </form>
+        <Fade in timeout={1000}>
+          <Box sx={{ mt: 4 }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Quick Actions</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Amount (Wei)"
+                      value={value}
+                      onChange={(e) => setValue(e.target.value)}
+                      variant="outlined"
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      color="primary"
+                      onClick={deposit}
+                      disabled={loading}
+                      startIcon={loading ? <CircularProgress size={20} /> : <Upload />}
+                    >
+                      Deposit
+                    </Button>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      color="secondary"
+                      onClick={withdraw}
+                      disabled={loading}
+                      startIcon={loading ? <CircularProgress size={20} /> : <Download />}
+                    >
+                      Withdraw
+                    </Button>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Box>
+        </Fade>
+
+        <Fade in timeout={1200}>
+          <Box sx={{ mt: 4 }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Transfer Funds</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="To Address"
+                      value={toAddress}
+                      onChange={(e) => setToaddress(e.target.value)}
+                      variant="outlined"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Amount to Transfer"
+                      value={transferAmount}
+                      onChange={(e) => setTransferAmount(e.target.value)}
+                      variant="outlined"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      color="primary"
+                      onClick={Transfer}
+                      disabled={loading}
+                      startIcon={loading ? <CircularProgress size={20} /> : <Send />}
+                    >
+                      Transfer
+                    </Button>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Box>
+        </Fade>
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+        >
+          <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Container>
     </div>
-
   );
-
 }
-
 
 export default App;
