@@ -14,3 +14,6 @@ Hi! This is a Simple **Banking Decentralized** Application built on top on **Eth
 - install ganache 
 - Have metamask in your Browser
 - Connect ganache Ethereum Account in Metamask
+
+## Frontend Ui
+![image](https://github.com/user-attachments/assets/84ace464-8fb8-42db-a2da-b734fe6bfb96)
